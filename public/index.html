@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>Secure Configuration Management</title>
+
+    <link
+      rel="stylesheet"
+      href="style.css"
+    />
+  </head>
+
+  <body>
+    <main class="container">
+
+      <header>
+        <p class="tag">
+          Cloud Computing • Security
+        </p>
+
+        <h1>
+          Secure Configuration Management
+        </h1>
+
+        <p>
+          Secure application configuration using
+          Microsoft Azure Key Vault.
+        </p>
+      </header>
+
+      <section class="info">
+
+        <div>
+          <span>Platform</span>
+          <strong>Microsoft Azure</strong>
+        </div>
+
+        <div>
+          <span>Service</span>
+          <strong>Azure Key Vault</strong>
+        </div>
+
+        <div>
+          <span>Authentication</span>
+          <strong>Azure Identity</strong>
+        </div>
+
+        <div>
+          <span>Environment</span>
+
+          <strong id="environment">
+            Loading...
+          </strong>
+        </div>
+
+      </section>
+
+      <section class="card">
+
+        <div class="card-header">
+
+          <div>
+            <h2>
+              Configuration status
+            </h2>
+
+            <p>
+              Configuration is automatically loaded
+              from Azure Key Vault when the server starts.
+            </p>
+          </div>
+
+          <button id="checkButton">
+            Check configuration
+          </button>
+
+        </div>
+
+        <div
+          id="status"
+          class="status-box"
+        >
+          Checking secure configuration...
+        </div>
+
+        <div id="secrets"></div>
+
+      </section>
+
+      <section class="security">
+
+        <h2>
+          Why is this secure?
+        </h2>
+
+        <ul>
+          <li>
+            Secrets are not stored inside
+            the source code.
+          </li>
+
+          <li>
+            Configuration is retrieved directly
+            from Azure Key Vault.
+          </li>
+
+          <li>
+            Secrets are loaded automatically
+            when the application starts.
+          </li>
+
+          <li>
+            Authentication is handled using
+            Azure Identity.
+          </li>
+
+          <li>
+            Secret values are never sent
+            to the browser.
+          </li>
+
+          <li>
+            Different environments can use
+            different Key Vaults without
+            changing the application code.
+          </li>
+        </ul>
+
+      </section>
+
+    </main>
+
+    <script>
+      const button =
+        document.getElementById("checkButton");
+
+      const status =
+        document.getElementById("status");
+
+      const secrets =
+        document.getElementById("secrets");
+
+      const environment =
+        document.getElementById("environment");
+
+
+      async function checkConfiguration() {
+
+        button.disabled = true;
+
+        button.textContent =
+          "Checking...";
+
+        status.textContent =
+          "Reading configuration status...";
+
+        status.className =
+          "status-box";
+
+        secrets.innerHTML = "";
+
+        try {
+
+          const response =
+            await fetch("/api/config-status");
+
+          const data =
+            await response.json();
+
+
+          environment.textContent =
+            formatEnvironment(
+              data.environment
+            );
+
+
+          if (!data.success) {
+
+            status.textContent =
+              "No secrets could be loaded from Azure Key Vault.";
+
+            status.className =
+              "status-box status-error";
+
+          } else if (data.allLoaded) {
+
+            status.textContent =
+              "Azure Key Vault configuration loaded successfully.";
+
+            status.className =
+              "status-box status-success";
+
+          } else {
+
+            status.textContent =
+              "Azure Key Vault connected, but some secrets could not be loaded.";
+
+            status.className =
+              "status-box status-warning";
+
+          }
+
+
+          data.secrets.forEach(
+            (secret) => {
+
+              const item =
+                document.createElement("div");
+
+              item.className =
+                "secret";
+
+
+              const details =
+                document.createElement("div");
+
+
+              const name =
+                document.createElement("strong");
+
+              name.textContent =
+                secret.name;
+
+
+              const description =
+                document.createElement("small");
+
+              description.textContent =
+                "Azure Key Vault Secret";
+
+
+              details.appendChild(name);
+
+              details.appendChild(
+                description
+              );
+
+
+              const secretStatus =
+                document.createElement("span");
+
+
+              secretStatus.className =
+                secret.loaded
+                  ? "success"
+                  : "error";
+
+
+              secretStatus.textContent =
+                secret.status;
+
+
+              item.appendChild(details);
+
+              item.appendChild(
+                secretStatus
+              );
+
+
+              secrets.appendChild(item);
+
+            }
+          );
+
+        } catch (error) {
+
+          console.error(error);
+
+          status.textContent =
+            "Could not retrieve application configuration status.";
+
+          status.className =
+            "status-box status-error";
+
+        } finally {
+
+          button.disabled = false;
+
+          button.textContent =
+            "Check configuration";
+
+        }
+      }
+
+
+      function formatEnvironment(value) {
+
+        if (!value) {
+          return "Unknown";
+        }
+
+        return (
+          value.charAt(0).toUpperCase()
+          +
+          value.slice(1)
+        );
+
+      }
+
+
+      button.addEventListener(
+        "click",
+        checkConfiguration
+      );
+
+
+      // Check automatically when page loads
+      checkConfiguration();
+    </script>
+
+  </body>
+</html>
