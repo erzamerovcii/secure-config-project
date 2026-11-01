@@ -7,16 +7,23 @@ const { SecretClient } = require("@azure/keyvault-secrets");
 const app = express();
 
 const PORT = process.env.PORT || 3000;
-const KEY_VAULT_URL = process.env.KEY_VAULT_URL;
 const APP_ENV = process.env.APP_ENV || "development";
+
+const vaults = {
+  development: "https://kv-secure-config-dev.vault.azure.net/",
+  staging: "https://kv-secure-config-staging.vault.azure.net/",
+  production: "https://kv-secure-config-prod.vault.azure.net/"
+};
+
+const KEY_VAULT_URL = vaults[APP_ENV];
+
 
 app.use(express.static("public"));
 
 if (!KEY_VAULT_URL) {
-  console.error("KEY_VAULT_URL is missing.");
+  console.error(`Invalid APP_ENV: ${APP_ENV}`);
   process.exit(1);
 }
-
 const credential = new DefaultAzureCredential();
 const client = new SecretClient(KEY_VAULT_URL, credential);
 
